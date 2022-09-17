@@ -1,0 +1,66 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "jenkins",
+  "title": "Jenkins",
+  "description": "",
+  "icon": "icon.png",
+  "author": "klassm",
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "list",
+      "title": "Jenkins",
+      "description": "",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "url",
+      "type": "textfield",
+      "title": "Jenkins URL",
+      "required": true,
+      "default": "",
+      "description": "URL to Jenkins"
+    },
+    {
+      "name": "username",
+      "type": "textfield",
+      "title": "Jenkins user",
+      "required": true,
+      "default": "",
+      "description": ""
+    },
+    {
+      "name": "password",
+      "type": "password",
+      "title": "Jenkins Password",
+      "required": true,
+      "default": "",
+      "description": ""
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.39.3",
+    "dotenv": "^16.0.2",
+    "lodash": "^4.17.21",
+    "node-fetch": "^3.2.10",
+    "replace-special-characters": "^1.2.6"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.185",
+    "@typescript-eslint/eslint-plugin": "^5.37.0",
+    "@typescript-eslint/parser": "^5.37.0",
+    "eslint": "^8.23.1",
+    "eslint-config-prettier": "^8.5.0",
+    "prettier": "^2.7.1",
+    "typescript": "^4.8.3"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "ray publish"
+  }
+}
