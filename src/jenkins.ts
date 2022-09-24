@@ -2,7 +2,7 @@ import { compact } from "lodash";
 import fetch from "node-fetch";
 
 interface JenkinsJobs {
-  jobs: JenkinsJob[]
+  jobs: JenkinsJob[];
 }
 
 interface JenkinsJob extends JenkinsJobs {
@@ -29,7 +29,7 @@ export interface Job {
 
 const isJenkinsResult = (result: unknown): result is JenkinsJobs => {
   return (result as JenkinsJobs).jobs !== undefined;
-}
+};
 
 function iconFor(score: number, iconUrl: string, color: string): string {
   const sanitizedColor = sanitizeColor(color);
@@ -41,14 +41,14 @@ function iconFor(score: number, iconUrl: string, color: string): string {
     return icon;
   }
 
-  return `images/${color}.png`
+  return `images/${color}.png`;
 }
 
 function sanitizeColor(color: string): string {
-  switch(color) {
-    case 'notbuilt':
-    case 'disabled':
-      return 'grey';
+  switch (color) {
+    case "notbuilt":
+    case "disabled":
+      return "grey";
     default:
       return color;
   }
@@ -89,23 +89,29 @@ function mapData(data: JenkinsJob, parent: Job | undefined = undefined, level = 
     icon: iconFor(healthScore, iconUrl, data.color),
     description: healthReport?.description,
     level,
-    path: compact([...(parent?.path ?? []), parent?.name])
-  }
+    path: compact([...(parent?.path ?? []), parent?.name]),
+  };
 
-  const hasChildJobs = data.jobs && (typeof data.jobs) === 'object'
-  const children = hasChildJobs ? data.jobs.flatMap(child => mapData(child, job, level + 1)) : [];
+  const hasChildJobs = data.jobs && typeof data.jobs === "object";
+  const children = hasChildJobs ? data.jobs.flatMap((child) => mapData(child, job, level + 1)) : [];
   return [job, ...children];
 }
 
-export async function queryAll(url: string, { username, password}: { username: string, password: string}): Promise<Job[]> {
-  const result = await fetch(`${url}/api/json?depth=10&tree=jobs[name,url,color,healthReport[description,score,iconUrl],jobs[name,url,color,healthReport[description,score,iconUrl],jobs[name,url,color,healthReport[description,score,iconUrl]]]]`, {
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${ username }:${ password }`).toString('base64')}`
+export async function queryAll(
+  url: string,
+  { username, password }: { username: string; password: string }
+): Promise<Job[]> {
+  const result = await fetch(
+    `${url}/api/json?depth=10&tree=jobs[name,url,color,healthReport[description,score,iconUrl],jobs[name,url,color,healthReport[description,score,iconUrl],jobs[name,url,color,healthReport[description,score,iconUrl]]]]`,
+    {
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`,
+      },
     }
-  });
+  );
   const json = await result.json();
   if (isJenkinsResult(json)) {
-    return json.jobs.flatMap(job => mapData(job))
+    return json.jobs.flatMap((job) => mapData(job));
   }
   return [];
 }
