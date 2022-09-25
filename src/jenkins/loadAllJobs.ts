@@ -1,5 +1,7 @@
 import { compact } from "lodash";
 import fetch from "node-fetch";
+import { Config } from "../types/Config";
+import { Job } from "../types/Job";
 
 interface JenkinsJobs {
   jobs: JenkinsJob[];
@@ -18,18 +20,9 @@ interface HealthReport {
   score: number;
 }
 
-export interface Job {
-  name: string;
-  url: string;
-  icon: string;
-  description: string;
-  level: number;
-  path: string[];
-}
-
-const isJenkinsResult = (result: unknown): result is JenkinsJobs => {
+function isJenkinsResult(result: unknown): result is JenkinsJobs {
   return (result as JenkinsJobs).jobs !== undefined;
-};
+}
 
 function iconFor(score: number, iconUrl: string, color: string): string {
   const sanitizedColor = sanitizeColor(color);
@@ -97,10 +90,7 @@ function mapData(data: JenkinsJob, parent: Job | undefined = undefined, level = 
   return [job, ...children];
 }
 
-export async function queryAll(
-  url: string,
-  { username, password }: { username: string; password: string }
-): Promise<Job[]> {
+export async function loadAllJobs({ url, username, password }: Config): Promise<Job[]> {
   const result = await fetch(
     `${url}/api/json?depth=10&tree=jobs[name,url,color,healthReport[description,score,iconUrl],jobs[name,url,color,healthReport[description,score,iconUrl],jobs[name,url,color,healthReport[description,score,iconUrl]]]]`,
     {
