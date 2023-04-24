@@ -1,5 +1,6 @@
 import { compact } from "lodash";
 import fetch from "node-fetch";
+import https from "https";
 import { Config } from "../types/Config";
 import { Job } from "../types/Job";
 
@@ -90,13 +91,17 @@ function mapData(data: JenkinsJob, parent: Job | undefined = undefined, level = 
   return [job, ...children];
 }
 
-export async function loadAllJobs({ url, username, password }: Config): Promise<Job[]> {
+export async function loadAllJobs({ url, username, password, unsafeHttps }: Config): Promise<Job[]> {
+  const httpsAgent = new https.Agent({
+    rejectUnauthorized: !unsafeHttps,
+  });
   const result = await fetch(
     `${url}/api/json?depth=10&tree=jobs[name,url,color,healthReport[description,score,iconUrl],jobs[name,url,color,healthReport[description,score,iconUrl],jobs[name,url,color,healthReport[description,score,iconUrl]]]]`,
     {
       headers: {
         Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`,
       },
+      agent: httpsAgent,
     }
   );
   const json = await result.json();
