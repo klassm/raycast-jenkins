@@ -29,7 +29,7 @@
       "title": "Jenkins user",
       "required": true,
       "default": "",
-      "description": ""
+      "description": "Jenkins username"
     },
     {
       "name": "password",
@@ -37,7 +37,16 @@
       "title": "Jenkins Password",
       "required": true,
       "default": "",
-      "description": ""
+      "description": "Jenkins password/token"
+    },
+    {
+      "name": "unsafeHttps",
+      "type": "checkbox",
+      "required": false,
+      "title": "Unsafe HTTPS",
+      "description": "Activate unsafe HTTPS mode for self-signed certificates",
+      "default": false,
+      "label": "Enable"
     }
   ],
   "dependencies": {
