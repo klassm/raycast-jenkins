@@ -2,7 +2,7 @@
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "jenkins",
   "title": "Jenkins",
-  "description": "",
+  "description": "List Jenkins job and open the respective jobs",
   "icon": "icon.png",
   "author": "klassm",
   "license": "MIT",
@@ -29,7 +29,7 @@
       "title": "Jenkins user",
       "required": true,
       "default": "",
-      "description": ""
+      "description": "Username to authenticate with Jenkins"
     },
     {
       "name": "password",
@@ -37,11 +37,11 @@
       "title": "Jenkins Password",
       "required": true,
       "default": "",
-      "description": ""
+      "description": "Password to authenticate with Jenkins"
     }
   ],
   "dependencies": {
-    "@raycast/api": "^1.39.3",
+    "@raycast/api": "^1.59.0",
     "dotenv": "^16.0.2",
     "lodash": "^4.17.21",
     "node-fetch": "^3.2.10",

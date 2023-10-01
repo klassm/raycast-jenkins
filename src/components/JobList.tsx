@@ -8,7 +8,7 @@ export function JobList() {
   return (
     <List
       isLoading={loading}
-      enableFiltering={false}
+      filtering={false}
       onSearchTextChange={setQuery}
       searchBarPlaceholder="Search Jenkins..."
       throttle
