@@ -99,6 +99,10 @@ export async function loadAllJobs({ url, username, password }: Config): Promise<
       },
     }
   );
+  if (result.status !== 200) {
+    console.log("Status was ", result.status, result.statusText);
+    return [];
+  }
   const json = await result.json();
   if (isJenkinsResult(json)) {
     return json.jobs.flatMap((job) => mapData(job));
