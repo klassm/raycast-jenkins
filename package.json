@@ -9,7 +9,7 @@
   "commands": [
     {
       "name": "list",
-      "title": "Seach Jenkins",
+      "title": "Search Jenkins",
       "description": "Search and open Jenkins jobs",
       "mode": "view"
     }

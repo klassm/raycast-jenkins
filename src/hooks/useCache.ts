@@ -24,7 +24,9 @@ async function loadData<T>(cacheKey: string, provider: CacheProvider<T>, options
   }
 
   const data = await provider();
-  updateData(cacheKey, data);
+  if (!(Array.isArray(data) && data.length === 0)) {
+    updateData(cacheKey, data);
+  }
   return data;
 }
 

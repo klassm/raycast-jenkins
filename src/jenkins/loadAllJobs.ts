@@ -20,6 +20,11 @@ interface HealthReport {
   score: number;
 }
 
+interface CrumbResponse {
+  crumbRequestField: string,
+  crumb: string
+}
+
 function isJenkinsResult(result: unknown): result is JenkinsJobs {
   return (result as JenkinsJobs).jobs !== undefined;
 }
@@ -82,7 +87,7 @@ function mapData(data: JenkinsJob, parent: Job | undefined = undefined, level = 
     icon: iconFor(healthScore, iconUrl, data.color),
     description: healthReport?.description,
     level,
-    path: compact([...(parent?.path ?? []), parent?.name]),
+    path: compact([...(parent?.path ?? []), parent?.name])
   };
 
   const hasChildJobs = data.jobs && typeof data.jobs === "object";
@@ -91,16 +96,38 @@ function mapData(data: JenkinsJob, parent: Job | undefined = undefined, level = 
 }
 
 export async function loadAllJobs({ url, username, password }: Config): Promise<Job[]> {
+  const credentials = `${username}:${password}`;
+  const base64Credentials = Buffer.from(credentials).toString("base64");
+  const authHeader = `Basic ${base64Credentials}`;
+
+
+  async function getCrumb(): Promise<CrumbResponse> {
+    const response = await fetch(`${url}/crumbIssuer/api/json`, {
+      method: "GET",
+      headers: {
+        Authorization: authHeader
+      }
+    });
+    if (response.status !== 200) {
+      throw new Error("failed to get crumb: " + response.statusText)
+    }
+    return await response.json() as CrumbResponse;
+  }
+
+  const {crumb, crumbRequestField} = await getCrumb();
+
+
   const result = await fetch(
     `${url}/api/json?depth=10&tree=jobs[name,url,color,healthReport[description,score,iconUrl],jobs[name,url,color,healthReport[description,score,iconUrl],jobs[name,url,color,healthReport[description,score,iconUrl]]]]`,
     {
       headers: {
         Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`,
-      },
+        [crumbRequestField]: crumb,
+      }
     }
   );
   if (result.status !== 200) {
-    console.log("Status was ", result.status, result.statusText);
+    console.log("Status was ", result.status, result.statusText, await result.text());
     return [];
   }
   const json = await result.json();
