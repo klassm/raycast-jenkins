@@ -2,31 +2,53 @@ import { compact } from "lodash";
 import fetch from "node-fetch";
 import { Config } from "../types/Config";
 import { Job } from "../types/Job";
+import { z } from "zod";
 
-interface JenkinsJobs {
-  jobs: JenkinsJob[];
-}
+export const healthReportSchema = z.object({
+  description: z.string(),
+  iconUrl: z.string(),
+  score: z.number(),
+});
 
-interface JenkinsJob extends JenkinsJobs {
+type JenkinsJob = {
   name: string;
-  healthReport: HealthReport[];
+  displayName: string;
+  healthReport: z.infer<typeof healthReportSchema>[];
   url: string;
-  color: string;
-}
+  color?: string;
+  jobs?: JenkinsJob[];
+};
 
-interface HealthReport {
-  description: string;
-  iconUrl: string;
-  score: number;
-}
+export const jenkinsJobSchema: z.ZodType<JenkinsJob> = z.lazy(() =>
+  z.object({
+    name: z.string(),
+    displayName: z.string(),
+    healthReport: z.array(healthReportSchema),
+    url: z.string(),
+    color: z.string().optional(),
+    jobs: z.array(jenkinsJobSchema).optional(),
+  })
+);
 
-interface CrumbResponse {
-  crumbRequestField: string;
-  crumb: string;
-}
+export const jenkinsJobsSchema = z.object({
+  jobs: z.array(jenkinsJobSchema),
+});
+
+type JenkinsJobs = z.infer<typeof jenkinsJobsSchema>;
+
+export const crumbResponseSchema = z.object({
+  crumbRequestField: z.string(),
+  crumb: z.string(),
+});
+
+type CrumbResponse = z.infer<typeof crumbResponseSchema>;
 
 function isJenkinsResult(result: unknown): result is JenkinsJobs {
-  return (result as JenkinsJobs).jobs !== undefined;
+  const parseResult = jenkinsJobsSchema.safeParse(result);
+  if (!parseResult.success) {
+    console.error("Invalid Jenkins result:", parseResult.error);
+  }
+  return parseResult.success;
 }
 
 function iconFor(score: number, iconUrl: string, color: string): string {
@@ -83,15 +105,16 @@ function mapData(data: JenkinsJob, parent: Job | undefined = undefined, level = 
 
   const job: Job = {
     name,
+    displayName: data.displayName,
     url: data.url,
-    icon: iconFor(healthScore, iconUrl, data.color),
+    icon: iconFor(healthScore, iconUrl, data.color ?? "grey"),
     description: healthReport?.description,
     level,
     path: compact([...(parent?.path ?? []), parent?.name]),
   };
 
   const hasChildJobs = data.jobs && typeof data.jobs === "object";
-  const children = hasChildJobs ? data.jobs.flatMap((child) => mapData(child, job, level + 1)) : [];
+  const children = hasChildJobs ? (data.jobs ?? []).flatMap((child) => mapData(child, job, level + 1)) : [];
   return [job, ...children];
 }
 
@@ -116,7 +139,7 @@ export async function loadAllJobs({ url, username, password }: Config): Promise<
   const { crumb, crumbRequestField } = await getCrumb();
 
   const result = await fetch(
-    `${url}/api/json?depth=10&tree=jobs[name,url,color,healthReport[description,score,iconUrl],jobs[name,url,color,healthReport[description,score,iconUrl],jobs[name,url,color,healthReport[description,score,iconUrl]]]]`,
+    `${url}/api/json?depth=10&tree=jobs[name,displayName,url,color,healthReport[description,score,iconUrl],jobs[name,displayName,url,color,healthReport[description,score,iconUrl],jobs[name,displayName,url,color,healthReport[description,score,iconUrl]]]]`,
     {
       headers: {
         Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`,

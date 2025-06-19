@@ -1,10 +1,10 @@
-import { sortBy, sum } from "lodash";
+import { sortBy, sum, uniq } from "lodash";
 import replaceSpecialCharacters from "replace-special-characters";
 import { Job } from "../types/Job";
 import { SearchableJob } from "./SearchableJob";
 
 export function toSearchableJob(job: Job): SearchableJob {
-  const searchKeywords = [job.name, ...job.path].map(toKeywords).flat();
+  const searchKeywords = [job.name, job.displayName, ...job.path].map(toKeywords).flat();
   return {
     ...job,
     searchKeywords,
@@ -43,5 +43,5 @@ function normalize(value: string): string {
 }
 
 export function toKeywords(value: string): string[] {
-  return normalize(value).split(/[-_ ]/);
+  return uniq(normalize(value).split(/[-_ ]/));
 }

@@ -25,7 +25,7 @@ function JenkinsJob({ job, updateMostUsed }: { job: Job; updateMostUsed: () => v
   const icon = `${__dirname}/assets/${job.icon}`;
   return (
     <List.Item
-      title={job.name}
+      title={job.displayName}
       subtitle={path}
       icon={icon}
       actions={
