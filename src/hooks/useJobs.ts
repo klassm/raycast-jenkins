@@ -12,7 +12,7 @@ export function useJobs() {
       return jobs.map(toSearchableJob);
     },
     {
-      expirationMillis: 1000 * 60 * 5,
+      expirationMillis: 0,
     }
   );
   return { repositories: data, loading };

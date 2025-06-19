@@ -1,4 +1,4 @@
-import { Cache } from "@raycast/api";
+import { Cache, showToast, Toast } from "@raycast/api";
 import { useEffect, useState, useMemo } from "react";
 
 const cache = new Cache();
@@ -14,42 +14,44 @@ interface CacheData<T> {
   data: T;
 }
 
-async function loadData<T>(cacheKey: string, provider: CacheProvider<T>, options: CacheOptions): Promise<T> {
+function loadExistingData<T>(cacheKey: string): CacheData<T> | undefined {
   const cachedData = cache.get(cacheKey);
-  const parsedData: CacheData<T> | undefined = cachedData === undefined ? undefined : JSON.parse(cachedData);
-
-  const now = new Date().getTime();
-  if (parsedData !== undefined && now - parsedData.lastModified < options.expirationMillis) {
-    return parsedData.data;
-  }
-
-  const data = await provider();
-  if (!(Array.isArray(data) && data.length === 0)) {
-    updateData(cacheKey, data);
-  }
-  return data;
+  return cachedData === undefined ? undefined : JSON.parse(cachedData);
 }
 
-function updateData<T>(cacheKey: string, newData: T) {
-  const now = new Date().getTime();
-  cache.set(
-    cacheKey,
-    JSON.stringify({
-      lastModified: now,
-      data: newData,
-    } as CacheData<T>)
-  );
+async function loadData<T>(cacheKey: string, provider: CacheProvider<T>): Promise<CacheData<T> | undefined> {
+  const data = await provider();
+  if (!(Array.isArray(data) && data.length === 0)) {
+    return updateData(cacheKey, data);
+  }
+  return undefined;
+}
+
+function updateData<T>(cacheKey: string, newData: T): CacheData<T> {
+  const saveData = {
+    lastModified: new Date().getTime(),
+    data: newData,
+  };
+  cache.set(cacheKey, JSON.stringify(saveData));
+  return saveData;
 }
 
 export function useCache<T>(key: string, provider: CacheProvider<T>, options: CacheOptions) {
-  const [data, setData] = useState<T | undefined>();
+  const [data, setData] = useState<CacheData<T> | undefined>(() => loadExistingData(key));
   const [loading, setLoading] = useState<boolean>(false);
 
   const reloadData = useMemo(
     () => () => {
       setLoading(true);
-      loadData(key, provider, options)
+      loadData(key, provider)
         .then(setData)
+        .catch(async (error) => {
+          await showToast({
+            style: Toast.Style.Failure,
+            title: "Reload data failed",
+            message: error.message,
+          });
+        })
         .finally(() => setLoading(false));
     },
     [loadData, setLoading]
@@ -62,10 +64,16 @@ export function useCache<T>(key: string, provider: CacheProvider<T>, options: Ca
     },
     [updateData, reloadData]
   );
-  useEffect(reloadData, []);
+  useEffect(() => {
+    const now = new Date().getTime();
+    if (data !== undefined && now - data.lastModified < options.expirationMillis) {
+      return;
+    }
+    reloadData();
+  }, []);
 
   return {
-    data,
+    data: data?.data,
     loading,
     update,
   };
